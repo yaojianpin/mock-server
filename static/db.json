@@ -1,0 +1,60 @@
+{
+
+  "config": {
+
+    "routing": {
+
+      "/a/b/c/:id": { 
+        "to": "/api/data/:id"
+      }
+    },
+
+    "wrapping": {
+
+      "ok": {
+        "code": 200,
+        "msg": "$msg", 
+        "data": "$data"
+      },
+      "err": {
+        "code": 500,
+        "msg": "$msg",
+        "data": "$data"
+      },
+      "pagination": {
+        "page": "$page",
+        "size": "$size",
+        "total": "$total",
+        "items": "$items"
+      }
+
+    }
+  },
+  "data": {
+      "data1|100": [
+      {
+        "id|+1": 1,
+        "i2": "@uuid",
+        "ser|+1": [ "a", "bb", "c" ],
+        "start|3": "a",
+        "pick|1": ["a", "b", "c"],
+        "float|.1-10": 0.5,
+        "float2|10-100.3-10": 100.5,
+        "name": "@name",
+        "word": "@word(5)",
+        "word2": "@word(1, 10)",
+        "sentence": "@sentence",
+        "sentence2": "@sentence(1, 10)",
+        "paragraph": "@paragraph",
+        "paragraph2": "@paragraph(1, 10)"
+      }
+    ],
+
+    "data2" : {
+      "id": "@uuid"
+    },
+
+    "data3": "@name"
+
+  }
+}
