@@ -2,12 +2,14 @@
 
 #![doc = include_str!("./docs/hand.md")]
 
+use axum::http::{HeaderValue, Method};
 use axum::Extension;
 use clap::Parser;
 use db::Database;
 use std::collections::HashMap;
 use std::io;
 use std::net::SocketAddr;
+use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, Registry};
 
 mod app;
@@ -38,13 +40,22 @@ async fn main() {
     Registry::default().with(fmt::layer()).init();
     tracing::info!("starting json server at port {}", args.port);
 
+    let cors = CorsLayer::new()
+        .allow_credentials(true)
+        .allow_methods(AllowMethods::mirror_request())
+        .allow_origin(AllowOrigin::mirror_request())
+        .allow_headers(AllowHeaders::mirror_request());
+
     let addr: SocketAddr = format!("127.0.0.1:{}", args.port).parse().unwrap();
     let mut db = Database::new();
 
     db.init(&args.config);
 
     let proxy = app::proxy(&db);
-    let app = app::create(&db).merge(proxy).layer(Extension(db));
+    let app = app::create(&db)
+        .merge(proxy)
+        .layer(cors)
+        .layer(Extension(db));
 
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
