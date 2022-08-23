@@ -25,7 +25,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          RUSTTARGET: ${{ matrix.target }}
+          RUSTTARGET: x86_64-apple-darwin
           ARCHIVE_TYPES: ${{ matrix.archive }}
       - name: Upload artifact
         uses: actions/upload-artifact@v3
