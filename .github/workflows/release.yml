@@ -7,80 +7,67 @@ on:
   pull_request:
     branches: [ "main" ]
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
+  build-release:
+    name: build-release
+    strategy:
+      matrix:
+        build: [linux-x86_64, macos-x86_64, windows-x86_64-gnu]
+        include:
+          - build: linux-x86_64
+            os: ubuntu-latest
+            rust: stable
+            target: x86_64-unknown-linux-gnu
+          - build: macos-x86_64
+            os: macos-latest
+            rust: stable
+            target: x86_64-apple-darwin
+          - build: windows-x86_64-gnu
+            os: windows-latest
+            rust: stable-x86_64-gnu
+            target: x86_64-pc-windows-gnu
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v1
+      - uses: actions/checkout@v3
 
-      - name: Install latest rust toolchain
-        uses: actions-rs/toolchain@v1
+        # Run build
+      - name: install rustup
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup-init.sh
+          sh rustup-init.sh -y --default-toolchain none
+          rustup target add ${{ matrix.target }}
+      - name: Add mingw64 to path for x86_64-gnu
+        run: echo "C:\msys64\mingw64\bin" >> $GITHUB_PATH
+        if: matrix.rust == 'stable-x86_64-gnu'
+        shell: bash
+
+      - name: Build release binaries
+        uses: actions-rs/cargo@v1
         with:
-          toolchain: stable
-          default: true
-          override: true
+          command: build
+          args: --release
 
-      - name: Build
-        run: cargo build --all --release && strip target/release/PROJECT_NAME && mv target/release/PROJECT_NAME target/release/PROJECT_NAME_amd64
-
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: |
-            target/release/PROJECT_NAME_amd64
+      - name: Build archive
+        shell: bash
+        run: |
+          staging="${{ matrix.build }}"
+          mkdir -p "$staging"
+          cp {README.md,LICENSE} "$staging/"
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            cp target/release/{mock-server.exe} "$staging/"
+            7z a "$staging.zip" "$staging"
+            echo "ASSET=$staging.zip" >> $GITHUB_ENV
+          else
+            cp target/release/{mock-server} "$staging/"
+            tar czf "$staging.tar.gz" "$staging"
+            echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
+          fi
+      - name: Upload Release Asset
+        if: github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  build-win:
-    runs-on: windows-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v1
-
-      - name: Install latest rust toolchain
-        uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
-          default: true
-          override: true
-
-      - name: Build
-        run: cargo build --all --release
-
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: target/release/PROJECT_NAME.exe
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  build-mac:
-    runs-on: macos-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v1
-
-      - name: Install latest rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: x86_64-apple-darwin
-          default: true
-          override: true
-
-      - name: Build for mac
-        run: cargo build --all --release && strip target/release/PROJECT_NAME && mv target/release/PROJECT_NAME target/release/PROJECT_NAME_darwin
-
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: |
-            target/release/PROJECT_NAME_darwin
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ env.ASSET }}
+          asset_name: ${{ env.ASSET }}
+          asset_content_type: application/octet-stream
