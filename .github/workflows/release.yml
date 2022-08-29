@@ -1,71 +1,37 @@
 # .github/workflows/release.yml
 
-name: build
+name: release
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 jobs:
-  build:
-    name: build
-    runs-on: ${{ matrix.os }}
+  release:
+    name: publish ${{ matrix.name }}
     strategy:
+      fail-fast: true
       matrix:
-        build: [linux, macos, windows]
         include:
-          - build: linux
-            os: ubuntu-18.04
-            rust: stable
-            target: x86_64-unknown-linux-musl
-            archive-name: mock-server-linux.tar.gz
-          - build: macos
-            os: macos-latest
-            rust: stable
-            target: x86_64-apple-darwin
-            archive-name: mock-server-macos.tar.gz
-          - build: windows
-            os: windows-2019
-            rust: stable
-            target: x86_64-pc-windows-msvc
-            archive-name: mock-server-windows.7z
-      fail-fast: false
-
+          - target: x86_64-pc-windows-gnu
+            suffix: windows-x86_64
+            archive: zip
+          - target: x86_64-unknown-linux-gnu
+            suffix: linux-x86_64
+            archive: tar.xz
+          - target: x86_64-apple-darwin
+            suffix: darwin-x86_64
+            archive: tar.gz
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Clone test repository
         uses: actions/checkout@v2
-
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
+      - uses: xhaiker/rust-release.action@v1.0.0
+        name: build ${{ matrix.name }}
         with:
-          toolchain: ${{ matrix.rust }}
-          profile: minimal
-          override: true
-          target: ${{ matrix.target }}
-
-      - name: Build binary
-        run: cargo build --verbose --release --target ${{ matrix.target }}
+          rust_target: ${{ matrix.target }}
+          archive_suffix: ${{ matrix.suffix }}
+          archive_types: ${{ matrix.archive }}
+          extra_files: "README.md README_zh.md LICENSE"
         env:
-          RUST_BACKTRACE: 1
-
-      - name: Strip binary (linux and macos)
-        if: matrix.build == 'linux' || matrix.build == 'macos'
-        run: strip "target/${{ matrix.target }}/release/mock-server"
-
-      - name: Build archive
-        shell: bash
-        run: |
-          mkdir archive
-          cd archive
-          if [ "${{ matrix.build }}" = "windows" ]; then
-            cp "../target/${{ matrix.target }}/release/mock-server.exe" ./
-            7z a "${{ matrix.archive-name }}" mock-server.exe
-          else
-            cp "../target/${{ matrix.target }}/release/mock-server" ./
-            tar -czf "${{ matrix.archive-name }}" mock-server
-          fi
-      - name: Upload archive
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.archive-name }}
-          path: archive/${{ matrix.archive-name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
