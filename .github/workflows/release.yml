@@ -56,14 +56,13 @@ jobs:
         shell: bash
         run: |
           mkdir archive
-          cp LICENSE README.md archive/
           cd archive
           if [ "${{ matrix.build }}" = "windows" ]; then
             cp "../target/${{ matrix.target }}/release/mock-server.exe" ./
-            7z a "${{ matrix.archive-name }}" LICENSE README.md mock-server.exe
+            7z a "${{ matrix.archive-name }}" mock-server.exe
           else
             cp "../target/${{ matrix.target }}/release/mock-server" ./
-            tar -czf "${{ matrix.archive-name }}" LICENSE README.md mock-server
+            tar -czf "${{ matrix.archive-name }}" mock-server
           fi
       - name: Upload archive
         uses: actions/upload-artifact@v3
