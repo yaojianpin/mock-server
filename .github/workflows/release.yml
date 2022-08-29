@@ -63,7 +63,7 @@ jobs:
             tar -czf "${{ matrix.archive-name }}" LICENSE README.md mock-server
           fi
       - name: Upload archive
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.archive-name }}
           path: archive/${{ matrix.archive-name }}
