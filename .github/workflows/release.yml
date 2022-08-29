@@ -45,7 +45,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release --target ${{matrix.target}}
+          args: --release --target ${{matrix.target}} --out-dir target/${{matrix.target}}/release
 
       - name: Build archive
         shell: bash
