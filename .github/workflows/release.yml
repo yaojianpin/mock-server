@@ -11,8 +11,8 @@ jobs:
     name: build-release
     strategy:
       matrix:
-        # build: [linux-x86_64, macos-x86_64, windows-x86_64-gnu]
-        build: [windows-x86_64-gnu]
+# build: [linux-x86_64, macos-x86_64, windows-x86_64-gnu]
+        build: [linux-x86_64]
         include:
           - build: linux-x86_64
             os: ubuntu-latest
@@ -45,7 +45,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release --target ${{matrix.target}} -
+          args: --release --target ${{matrix.target}} --verbose
 
       - name: Build archive
         shell: bash
