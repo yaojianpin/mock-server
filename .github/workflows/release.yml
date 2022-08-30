@@ -4,13 +4,13 @@ name: release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 jobs:
   build-release:
     name: build-release
     strategy:
       matrix:
-        build: [linux-x86_64]
+        build: [linux-x86_64,macos-x86_64,windows-x86_64-gnu]
         include:
           - build: linux-x86_64
             os: ubuntu-latest
@@ -36,7 +36,7 @@ jobs:
           rustup target add ${{ matrix.target }}
       - name: Add mingw64 to path for x86_64-gnu
         run: echo "C:\msys64\mingw64\bin" >> $GITHUB_PATH
-        if: matrix.rust == 'stable-x86_64-gnu'
+        if: matrix.rust == 'nightly-x86_64-gnu'
         shell: bash
 
       - name: Build release binaries
