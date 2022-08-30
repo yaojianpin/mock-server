@@ -3,9 +3,8 @@
 name: release
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    tags:
+      - 'v*'
 jobs:
   build-release:
     name: build-release
