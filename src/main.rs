@@ -1,6 +1,6 @@
 //! Json server for mock testing
 
-#![doc = include_str!("../readme.md")]
+#![doc = include_str!("../README.md")]
 
 use axum::Extension;
 use clap::Parser;
