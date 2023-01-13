@@ -6,6 +6,20 @@
 
       "/a/b/c/:id": { 
         "to": "/api/data/:id"
+      },
+      "/a/b/data2": { 
+        "to": "/api/data2"
+      },
+      "/c/data3": { 
+        "to": "/api/data3"
+      },
+      "/api/d/v1/friends" : {
+        "to": "/api/friends",
+        "query": {
+          "name": "_q",
+          "p": "_page",
+          "s": "_size"
+        }
       }
     },
 
@@ -25,7 +39,7 @@
         "page": "$page",
         "size": "$size",
         "total": "$total",
-        "items": "$items"
+        "rows": "$items"
       }
 
     }
@@ -54,7 +68,10 @@
       "id": "@uuid"
     },
 
-    "data3": "@name"
-
+    "data3": "@name",
+    "friends|20": [{
+      "name": "@name",
+      "float|.1-10": 0.5
+    }]
   }
 }

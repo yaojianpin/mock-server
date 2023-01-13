@@ -9,7 +9,7 @@ mock-server --config config.json --port 8080
 
 ## config.json 
 
-```json
+```js
 {
 
   // config part
@@ -21,6 +21,18 @@ mock-server --config config.json --port 8080
       // through /a/b/c/1 to access /api/<data>/1
       "/a/b/c/:id": { 
         "to": "/api/data/:id",
+      },
+
+      // query mapping
+      // the `query` use to map the custom's query to the built-in queries.
+      // currently, the built-in queries includes _q, _page, _size, _sort and _order.
+      "/api/d/v1/friends" : {
+        "to": "/api/friends",
+        "query": {
+          "name": "_q",
+          "p": "_page",
+          "s": "_size"
+        }
       }
     },
 

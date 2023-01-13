@@ -1,14 +1,11 @@
 //! Json server for mock testing
 
-#![doc = include_str!("./docs/hand.md")]
+#![doc = include_str!("../readme.md")]
 
-use axum::http::{HeaderValue, Method};
 use axum::Extension;
 use clap::Parser;
 use db::Database;
-use std::collections::HashMap;
-use std::io;
-use std::net::SocketAddr;
+use std::{collections::HashMap, io, net::SocketAddr};
 use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, Registry};
 
