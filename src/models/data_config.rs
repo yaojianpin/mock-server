@@ -1,22 +1,23 @@
+use crate::util;
+
+use super::{Wrapper, WRAP_KEY_ERR, WRAP_KEY_OK};
 use axum::{response::IntoResponse, Json};
 use serde_json::{json, Value};
 use std::collections::HashMap;
 
-const WRAP_KEY_OK: &str = "ok";
-const WRAP_KEY_ERR: &str = "err";
-const WRAP_PAGE: &str = "pagination";
-const WRAP_MSG: &str = "$msg";
-const WRAP_DATA: &str = "$data";
-
-const WRAP_PAGE_TOTAL: &str = "$total";
-const WRAP_PAGE_PAGE: &str = "$page";
-const WRAP_PAGE_SIZE: &str = "$size";
-const WRAP_PAGE_ITEMS: &str = "$items";
+#[derive(Debug, serde::Deserialize, Clone)]
+pub struct RoutingRule {
+    pub key: String,
+    pub r#match: String,
+    pub message: String,
+}
 
 #[derive(Debug, Default, serde::Deserialize, Clone)]
 pub struct RoutingValue {
     pub to: String,
     pub query: Option<HashMap<String, String>>,
+    pub wrapping: Option<HashMap<String, Value>>,
+    pub rules: Option<Vec<RoutingRule>>,
 }
 
 #[derive(Debug, Default)]
@@ -35,51 +36,6 @@ impl DataConfig {
         config
     }
 
-    pub fn wrapping_result(
-        &self,
-        data: Result<Value, String>,
-    ) -> Result<Json<Value>, impl IntoResponse> {
-        match data {
-            Ok(v) => self.wrap_value(WRAP_KEY_OK, "sucess", v),
-            Err(e) => self.wrap_value(WRAP_KEY_ERR, &e, json!({})),
-        }
-    }
-
-    pub fn wrapping_page(
-        &self,
-        items: Vec<&Value>,
-        total: usize,
-        page: usize,
-        size: usize,
-    ) -> Value {
-        match self.wrapping.get(WRAP_PAGE) {
-            Some(v) => {
-                let mut obj = v.clone();
-
-                for (key, value) in obj.as_object().unwrap().clone() {
-                    if value.is_string() && value.as_str().unwrap() == WRAP_PAGE_TOTAL {
-                        obj[&key] = json!(total);
-                    }
-
-                    if value.is_string() && value.as_str().unwrap() == WRAP_PAGE_PAGE {
-                        obj[&key] = json!(page);
-                    }
-
-                    if value.is_string() && value.as_str().unwrap() == WRAP_PAGE_SIZE {
-                        obj[&key] = json!(size);
-                    }
-
-                    if value.is_string() && value.as_str().unwrap() == WRAP_PAGE_ITEMS {
-                        obj[&key] = json!(items);
-                    }
-                }
-
-                obj
-            }
-            None => Value::Null,
-        }
-    }
-
     fn wrapping_parse(&mut self, data: &Value) {
         let wrap_data = data["wrapping"].clone();
         if !wrap_data.is_null() {
@@ -93,37 +49,6 @@ impl DataConfig {
         if !routing_data.is_null() {
             self.routing =
                 serde_json::from_value::<HashMap<String, RoutingValue>>(routing_data).unwrap();
-        }
-    }
-
-    fn wrap_value(&self, key: &str, msg: &str, data: Value) -> Result<Json<Value>, String> {
-        match self.wrapping.get(key) {
-            // find wrap data
-            Some(ok) => {
-                let mut obj = ok.clone();
-                let mut data_key: Option<String> = None;
-                let mut msg_key: Option<String> = None;
-                for (key, value) in obj.as_object().unwrap().clone() {
-                    if value.is_string() && value.as_str().unwrap() == WRAP_DATA {
-                        data_key = Some(key.clone());
-                    }
-                    if value.is_string() && value.as_str().unwrap() == WRAP_MSG {
-                        msg_key = Some(key.clone());
-                    }
-                }
-                if let Some(k) = data_key {
-                    obj[&k] = data;
-                }
-                if let Some(k) = msg_key {
-                    obj[&k] = json!(msg);
-                }
-                Ok(Json(obj))
-            }
-            // not find
-            None => match key {
-                WRAP_KEY_OK => Ok(Json(data)),
-                _ => Err(msg.to_string()),
-            },
         }
     }
 }

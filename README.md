@@ -26,14 +26,48 @@ mock-server --config config.json --port 8080
       // query mapping
       // the `query` use to map the custom's query to the built-in queries.
       // currently, the built-in queries includes _q, _page, _size, _sort and _order.
-      "/api/d/v1/friends" : {
+      "/api/v1/friends" : {
+
+        // to built-in routing
         "to": "/api/friends",
         "query": {
           "name": "_q",
           "p": "_page",
           "s": "_size"
         }
+      }，
+
+      // custom return data with wrapping which is just for this routing
+      "/api/v1/friend/:id" : {
+
+        // to built-in routing
+        "to": "/api/friends/:id",
+
+        // add rules to check the data
+        // the source data should be from path, query or body
+        "rules": [
+          { "key": "id", "match": "\\d+",  "message": "id must be number" },
+        ],
+        "wrapping": {
+          "ok": {
+            "status": "success",
+
+            // support nested $data replacement
+            "nested": {
+              "data": "$data"
+            }
+          },
+
+          // custom error data
+          "err": {
+            "status": "error",
+            "my_message": "$msg",
+            "others": "others"
+          }
+        }
+
       }
+    },
     },
 
     // result wrapping

@@ -13,13 +13,33 @@
       "/c/data3": { 
         "to": "/api/data3"
       },
-      "/api/d/v1/friends" : {
+      "/api/v1/friends" : {
         "to": "/api/friends",
         "query": {
           "name": "_q",
           "p": "_page",
           "s": "_size"
         }
+      },
+      "/api/v1/friend/:id" : {
+        "to": "/api/friends/:id",
+        "rules": [
+          { "key": "id", "match": "\\d+",  "message": "id must be number" }
+        ],
+        "wrapping": {
+          "ok": {
+            "status": "success",
+            "nested": {
+              "data": "$data"
+            }
+          },
+          "err": {
+            "status": "error",
+            "my_message": "$msg",
+            "others": "others"
+          }
+        }
+
       }
     },
 
@@ -71,7 +91,8 @@
     "data3": "@name",
     "friends|20": [{
       "name": "@name",
-      "float|.1-10": 0.5
+      "age|1-100": 20,
+      "id|+1": 1
     }]
   }
 }

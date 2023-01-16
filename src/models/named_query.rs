@@ -53,14 +53,14 @@ impl NamedQuery {
     }
 
     /// get value from query by given key
-    pub fn get(&self, key: &str) -> Option<&String> {
-        self.query.get(key)
-    }
+    // pub fn get(&self, key: &str) -> Option<&String> {
+    //     self.query.get(key)
+    // }
 
     /// check if the query is empty
-    pub fn is_empty(&self) -> bool {
-        self.query.is_empty()
-    }
+    // pub fn is_empty(&self) -> bool {
+    //     self.query.is_empty()
+    // }
 
     /// check thie item's properties matches the query
     pub fn is_match(&self, item: &Value) -> bool {

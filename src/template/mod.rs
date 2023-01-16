@@ -14,26 +14,26 @@ mod utils;
 mod value;
 
 pub fn gen_data<'a>(name: &str, value: &Value) -> (String, Value) {
-  let gen = Generator::new();
-  gen.gen_data(name, value)
+    let gen = Generator::new();
+    gen.gen_data(name, value)
 }
 
 pub fn call(name: &str, params: (usize, usize)) -> String {
-  let map = get_fn_mapping();
+    let map = get_fn_mapping();
 
-  if let Some(f) = map.get(name) {
-    return f(params.0, params.1);
-  }
+    if let Some(f) = map.get(name) {
+        return f(params.0, params.1);
+    }
 
-  "".to_string()
+    "".to_string()
 }
 
 pub fn get_fn_mapping<'a>() -> HashMap<&'a str, &'a dyn Fn(usize, usize) -> String> {
-  HashMap::from([
-    ("name", &name as &dyn Fn(usize, usize) -> String),
-    ("word", &word),
-    ("sentence", &sentence),
-    ("paragraph", &paragraph),
-    ("uuid", &id::uuid),
-  ])
+    HashMap::from([
+        ("name", &name as &dyn Fn(usize, usize) -> String),
+        ("word", &word),
+        ("sentence", &sentence),
+        ("paragraph", &paragraph),
+        ("uuid", &id::uuid),
+    ])
 }
