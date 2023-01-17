@@ -395,7 +395,7 @@ dependencies = [
 
 [[package]]
 name = "mock-server"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "axum",
  "clap",

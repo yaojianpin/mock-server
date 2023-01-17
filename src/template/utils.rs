@@ -13,8 +13,6 @@ pub fn pick(arr: &Vec<Value>) -> &Value {
     &arr[index]
 }
 
-pub fn shuffle<T>(arr: Vec<T>, min: u32, max: u32) {}
-
 pub fn char(pool: &str) -> char {
     let pools = HashMap::from([
         ("lower", "abcdefghijklmnopqrstuvwxyz"),
@@ -29,6 +27,7 @@ pub fn char(pool: &str) -> char {
     chars[idx] as char
 }
 
+#[allow(dead_code)]
 pub fn int(min: usize, max: usize) -> usize {
     random(min, max)
 }
@@ -38,6 +37,7 @@ pub fn bool() -> bool {
     ret == 1
 }
 
+#[allow(dead_code)]
 pub fn float(min: usize, max: usize, dmin: usize, dmax: usize) -> f64 {
     let mut ret = String::new();
     let count = random(min, max);

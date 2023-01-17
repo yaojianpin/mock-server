@@ -3,8 +3,7 @@ use crate::{
     models::{
         Wrapper, WRAP_DATA, WRAP_KEY_ERR, WRAP_KEY_OK, WRAP_MSG, WRAP_PAGE, WRAP_PAGE_ITEMS,
         WRAP_PAGE_PAGE, WRAP_PAGE_SIZE, WRAP_PAGE_TOTAL,
-    },
-    HashMap,
+    }
 };
 use axum::{response::IntoResponse, Json};
 use serde_json::{json, Value};
@@ -22,15 +21,15 @@ use std::cmp::Ordering;
 // }
 
 /// find json by given keys
-pub fn find_by_data_name<'a>(data: &'a Value, data_name: &str) -> Result<&'a Value, String> {
-    let json = &data[data_name];
+// pub fn find_by_data_name<'a>(data: &'a Value, data_name: &str) -> Result<&'a Value, String> {
+//     let json = &data[data_name];
 
-    if !json.is_null() && json.is_array() {
-        return Ok(&json);
-    }
+//     if !json.is_null() && json.is_array() {
+//         return Ok(&json);
+//     }
 
-    Err("not found by data_name {data_name}".to_string())
-}
+//     Err("not found by data_name {data_name}".to_string())
+// }
 
 // pub fn find_by_data_name_mut<'a>(
 //     data: &'a mut Value,
