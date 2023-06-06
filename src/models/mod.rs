@@ -14,7 +14,7 @@ pub const WRAP_PAGE_PAGE: &str = "$page";
 pub const WRAP_PAGE_SIZE: &str = "$size";
 pub const WRAP_PAGE_ITEMS: &str = "$items";
 
-pub use data_config::{DataConfig, RoutingRule};
+pub use data_config::{DataConfig, RoutingRule, RoutingValue};
 pub use named_query::NamedQuery;
 use serde_json::Value;
 pub type Wrapper = HashMap<String, Value>;

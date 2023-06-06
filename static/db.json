@@ -3,7 +3,9 @@
   "config": {
 
     "routing": {
-
+      "/fbpm_demo/api/expense/listByPageTask": {
+        "to": "/api/data2"
+      },
       "/a/b/c/:id": { 
         "to": "/api/data/:id"
       },

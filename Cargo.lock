@@ -395,7 +395,7 @@ dependencies = [
 
 [[package]]
 name = "mock-server"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "axum",
  "clap",
@@ -405,6 +405,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tower",
  "tower-http",
  "tracing",
  "tracing-subscriber",

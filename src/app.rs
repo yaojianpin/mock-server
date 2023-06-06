@@ -1,16 +1,18 @@
 use crate::{
-    models::{DataConfig, RoutingRule, Wrapper, WRAP_KEY_ERR, WRAP_KEY_OK},
+    models::{DataConfig, RoutingRule, RoutingValue, Wrapper, WRAP_KEY_ERR, WRAP_KEY_OK},
     service::*,
     util, Database, HashMap,
 };
 use axum::{
-    extract::{OriginalUri, Path, Query},
-    http::{Method, StatusCode},
+    body::Body,
+    extract::{FromRequest, Path, Query, RequestParts},
+    http::{Method, Request, StatusCode},
     response::IntoResponse,
-    routing::{any, get, get_service},
-    Extension, Json, Router,
+    routing::{get, get_service},
+    Extension, Form, Json, Router,
 };
 use serde_json::Value;
+use tower::service_fn;
 use tower_http::services::ServeDir;
 
 const DATA_QUERY_TPL: &str = "/api/([^/]*)$";
@@ -38,24 +40,51 @@ pub fn proxy(db: &Database) -> Router {
         tracing::debug!("routing {} to {:?}", key, v);
         let routing_value = v.clone();
         let wrap = create_wrap(config, &routing_value.wrapping);
-        router = router.route(
-            key,
-            any(
-                |method: Method,
-                 mut path: Path<HashMap<String, String>>,
-                 query: Query<HashMap<String, String>>,
-                 body: Json<Value>,
-                 db: Extension<Database>,
-                 wapper: Extension<Wrapper>,
-                 OriginalUri(original_uri): OriginalUri| async move {
-                    tracing::debug!(
-                        "original_uri = {original_uri}, method={method} path={:?}, query={:?}, body={:?}",
-                        path, query, body
-                    );
+        router = router
+            .route(
+                key,
+                service_fn(|req: Request<Body>| async move {
+                    let ex = req.extensions();
+                    let db = Extension(ex.get::<Database>().cloned().unwrap());
+                    let wrap = Extension(ex.get::<Wrapper>().cloned().unwrap());
+                    let Extension(routing_value) =
+                        Extension(ex.get::<RoutingValue>().cloned().unwrap());
+                    let uri = req.uri();
+                    tracing::info!("uri={}", uri);
 
+                    let mut req_parts = RequestParts::new(req);
+
+                    let query = Query::<HashMap<String, String>>::from_request(&mut req_parts)
+                        .await
+                        .unwrap();
+                    let mut path = Path::<HashMap<String, String>>::from_request(&mut req_parts)
+                        .await
+                        .unwrap();
+
+                    let mut body = Json(Value::Null);
+
+                    // process form body and convert it to json format
+                    if let Ok(Form(v)) =
+                        Form::<Vec<(String, String)>>::from_request(&mut req_parts).await
+                    {
+                        let mut map = serde_json::Map::new();
+                        for (key, value) in v {
+                            map.insert(key, value.into());
+                        }
+
+                        body = Json(serde_json::Value::Object(map));
+                    }
+
+                    // process json body
+                    if let Ok(v) = Json::<Value>::from_request(&mut req_parts).await {
+                        body = v;
+                    }
+
+                    let method = req_parts.method();
                     // 检查规则
                     if let Err(err) = validate_rules(routing_value.rules, &path, &query, &body) {
-                        return util::wrap_result(Err(err), Some(wapper.0)).into_response();
+                        let res = util::wrap_result(Err(err), Some(wrap.0)).into_response();
+                        return Ok(res);
                     }
                     // match the template
                     let re = regex::Regex::new(DATA_QUERY_TPL).unwrap();
@@ -66,13 +95,14 @@ pub fn proxy(db: &Database) -> Router {
                         }
 
                         let new_query = create_query(query, routing_value.query);
-                        return query_data(path, Query(new_query), db.clone())
+                        let res = query_data(path, Query(new_query), db.clone())
                             .await
                             .into_response();
+                        return Ok(res);
                     }
 
                     let re = regex::Regex::new(DATA_ID_TPL).unwrap();
-                   if let Some(cap) = re.captures(&routing_value.to) {
+                    if let Some(cap) = re.captures(&routing_value.to) {
                         let data = cap.get(1).unwrap().as_str();
                         let id = cap.get(2).unwrap().as_str();
                         if !data.starts_with(":") {
@@ -82,19 +112,24 @@ pub fn proxy(db: &Database) -> Router {
                         if !id.starts_with(":") {
                             path.insert("id".to_string(), id.to_string());
                         }
-                        return match method {
-                            Method::GET => get_data(path, db, wapper).await.into_response(),
-                            Method::POST => post_data(path, body, db, wapper).await.into_response(),
-                            Method::PUT => put_data(path, body, db, wapper).await.into_response(),
-                            Method::DELETE => delete_data(path, db, wapper).await.into_response(),
-                            _ => (StatusCode::METHOD_NOT_ALLOWED, "method not support").into_response(),
-                        }
+                        let res = match method {
+                            &Method::GET => get_data(path, db, wrap).await.into_response(),
+                            &Method::POST => post_data(path, body, db, wrap).await.into_response(),
+                            &Method::PUT => put_data(path, body, db, wrap).await.into_response(),
+                            &Method::DELETE => delete_data(path, db, wrap).await.into_response(),
+                            _ => (StatusCode::METHOD_NOT_ALLOWED, "method not support")
+                                .into_response(),
+                        };
+
+                        return Ok(res);
                     }
 
-                    (StatusCode::BAD_REQUEST, "bad request").into_response()
-                },
-            ),
-        ).layer(Extension(wrap))
+                    let res = (StatusCode::BAD_REQUEST, "bad request").into_response();
+                    Ok(res)
+                }),
+            )
+            .layer(Extension(wrap))
+            .layer(Extension(routing_value))
     }
 
     router
