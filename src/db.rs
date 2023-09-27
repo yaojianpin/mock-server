@@ -8,10 +8,12 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::RwLock;
+use tracing::error;
 
 #[derive(Clone)]
 pub struct Database {
     collections: Arc<RwLock<HashMap<String, Value>>>,
+    files: HashMap<String, String>,
     config: Arc<DataConfig>,
 }
 
@@ -27,6 +29,7 @@ impl<'a> Database {
         Database {
             config: Arc::new(DataConfig::default()),
             collections: Arc::new(RwLock::new(HashMap::new())),
+            files: HashMap::new(),
         }
     }
 
@@ -45,6 +48,18 @@ impl<'a> Database {
                 for (key, value) in data_list {
                     let (name, data) = gen_data(key, value);
                     collections.insert(name, data);
+                }
+
+                if let Some(file) = json.get("file") {
+                    if let Some(file_list) = file.as_object() {
+                        for (key, value) in file_list {
+                            if let Some(path) = value.as_str() {
+                                self.files.insert(key.to_string(), path.to_string());
+                            } else {
+                                error!("file.{} must be string type", key);
+                            }
+                        }
+                    }
                 }
 
                 self.config = Arc::new(DataConfig::new(&config));
@@ -236,5 +251,16 @@ impl<'a> Database {
         }
 
         Ok(Value::Bool(true))
+    }
+
+    pub fn get_file(
+        &mut self,
+        path_map: &HashMap<std::string::String, std::string::String>,
+    ) -> Result<String, String> {
+        let file_id = path_map.get("id").unwrap();
+        match self.files.get(file_id) {
+            Some(v) => Ok(v.clone()),
+            None => Err(format!("not found item by id {}", file_id)),
+        }
     }
 }

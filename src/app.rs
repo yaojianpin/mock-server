@@ -17,6 +17,7 @@ use tower_http::services::ServeDir;
 
 const DATA_QUERY_TPL: &str = "/api/([^/]*)$";
 const DATA_ID_TPL: &str = "/api/([^/]*)/([^/]*)$";
+const FILE_ID_TPL: &str = "/file/([^/]*)$";
 
 pub fn create(_: &Database) -> Router {
     let app = Router::new()
@@ -28,6 +29,7 @@ pub fn create(_: &Database) -> Router {
                 .put(put_data)
                 .delete(delete_data),
         )
+        .route("/file/:id", get(get_file).post(get_file))
         .fallback(get_service(ServeDir::new("static")).handle_error(handle_error));
 
     app
@@ -101,8 +103,10 @@ pub fn proxy(db: &Database) -> Router {
                         return Ok(res);
                     }
 
-                    let re = regex::Regex::new(DATA_ID_TPL).unwrap();
-                    if let Some(cap) = re.captures(&routing_value.to) {
+                    if let Some(cap) = regex::Regex::new(DATA_ID_TPL)
+                        .unwrap()
+                        .captures(&routing_value.to)
+                    {
                         let data = cap.get(1).unwrap().as_str();
                         let id = cap.get(2).unwrap().as_str();
                         if !data.starts_with(":") {
@@ -117,6 +121,24 @@ pub fn proxy(db: &Database) -> Router {
                             &Method::POST => post_data(path, body, db, wrap).await.into_response(),
                             &Method::PUT => put_data(path, body, db, wrap).await.into_response(),
                             &Method::DELETE => delete_data(path, db, wrap).await.into_response(),
+                            _ => (StatusCode::METHOD_NOT_ALLOWED, "method not support")
+                                .into_response(),
+                        };
+
+                        return Ok(res);
+                    }
+
+                    if let Some(cap) = regex::Regex::new(FILE_ID_TPL)
+                        .unwrap()
+                        .captures(&routing_value.to)
+                    {
+                        let id = cap.get(1).unwrap().as_str();
+                        if !id.starts_with(":") {
+                            path.insert("id".to_string(), id.to_string());
+                        }
+                        let res = match method {
+                            &Method::GET => get_file(path, db).await.into_response(),
+                            &Method::POST => get_file(path, db).await.into_response(),
                             _ => (StatusCode::METHOD_NOT_ALLOWED, "method not support")
                                 .into_response(),
                         };

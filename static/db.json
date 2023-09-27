@@ -3,8 +3,8 @@
   "config": {
 
     "routing": {
-      "/fbpm_demo/api/expense/listByPageTask": {
-        "to": "/api/data2"
+      "/my_image/:id": {
+        "to": "/file/:id"
       },
       "/a/b/c/:id": { 
         "to": "/api/data/:id"
@@ -96,5 +96,11 @@
       "age|1-100": 20,
       "id|+1": 1
     }]
+  },
+
+  "file": {
+    "image1": "./static/image1.jpg",
+    "text1": "./static/text1.txt",
+    "json1": "./static/json1.json"
   }
 }
