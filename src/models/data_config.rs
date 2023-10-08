@@ -14,6 +14,7 @@ pub struct RoutingValue {
     pub query: Option<HashMap<String, String>>,
     pub wrapping: Option<HashMap<String, Value>>,
     pub rules: Option<Vec<RoutingRule>>,
+    pub status: Option<u16>,
 }
 
 #[derive(Debug, Default)]

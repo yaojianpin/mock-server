@@ -116,7 +116,7 @@ pub fn proxy(db: &Database) -> Router {
                         if !id.starts_with(":") {
                             path.insert("id".to_string(), id.to_string());
                         }
-                        let res = match method {
+                        let mut res = match method {
                             &Method::GET => get_data(path, db, wrap).await.into_response(),
                             &Method::POST => post_data(path, body, db, wrap).await.into_response(),
                             &Method::PUT => put_data(path, body, db, wrap).await.into_response(),
@@ -124,6 +124,10 @@ pub fn proxy(db: &Database) -> Router {
                             _ => (StatusCode::METHOD_NOT_ALLOWED, "method not support")
                                 .into_response(),
                         };
+
+                        if let Some(code) = routing_value.status {
+                            *res.status_mut() = StatusCode::from_u16(code).unwrap()
+                        }
 
                         return Ok(res);
                     }
@@ -136,12 +140,16 @@ pub fn proxy(db: &Database) -> Router {
                         if !id.starts_with(":") {
                             path.insert("id".to_string(), id.to_string());
                         }
-                        let res = match method {
+                        let mut res = match method {
                             &Method::GET => get_file(path, db).await.into_response(),
                             &Method::POST => get_file(path, db).await.into_response(),
                             _ => (StatusCode::METHOD_NOT_ALLOWED, "method not support")
                                 .into_response(),
                         };
+
+                        if let Some(code) = routing_value.status {
+                            *res.status_mut() = StatusCode::from_u16(code).unwrap()
+                        }
 
                         return Ok(res);
                     }

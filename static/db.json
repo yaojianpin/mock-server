@@ -10,7 +10,8 @@
         "to": "/api/data/:id"
       },
       "/a/b/data2": { 
-        "to": "/api/data2"
+        "to": "/api/data2",
+        "status": 500
       },
       "/c/data3": { 
         "to": "/api/data3"
