@@ -1,4 +1,7 @@
 # mock-server
+[![Test](https://github.com/yaojianpin/mock-server/actions/workflows/test.yml/badge.svg)]
+[![Release](https://github.com/yaojianpin/mock-server/actions/workflows/release.yml/badge.svg)]
+
 
 `mock-server` is a json server that you can create mock data like `mockjs`
 
